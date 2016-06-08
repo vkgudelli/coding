@@ -1,0 +1,7 @@
+set terminal png
+set out 'initialConfig.png'
+set xlabel 'X'
+set ylabel 'Y'
+set xrange [-1.5:1.5]
+set yrange [-1.5:1.5]
+plot 'initialConfig' , sqrt(1-(x*x)) w lp ,-sqrt(1-(x*x)) w lp

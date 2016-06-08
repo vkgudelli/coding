@@ -1,0 +1,12 @@
+clear all;
+t=[0.15;0];
+[x,y,z]=cylinder(t,180);
+figure;
+surf(x+0.15,y+0.15,z);
+hold all;
+surf(x+0.45,y+0.15,z);
+surf(x+0.3,y+0.41,z);
+% surf(x+0.15,y+0.45,z);
+% surf(x+0.45,y+0.45,z);
+colormap(summer);
+set(gca,'Visible','off');

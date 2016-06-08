@@ -1,0 +1,1 @@
+image3d = cat(3, slice1, slice2, slice3, slice4);

@@ -1,0 +1,430 @@
+!*******************************************************
+!*         SOLVING A LINEAR MATRIX SYSTEM AX=B         *
+!*              with Gauss Jordan Method               *
+!*******************************************************
+
+!********************************************************************
+! SAMPLE RUN:                                                       *
+! Input file sysmat.dat                                             *
+!* 5                                                                *
+!* 2.0  -1.0   1.0  7.0  -12.54                                     *
+!* 1.0   5.0  -2.0  -8.0 100.0                                      *
+!* 3.0  -2.0   3.0   45.0 27.3333                                   *
+!* 11.0   0.55  -2.0  -4.0 1.0                                      *
+!* 33.0  2.0  - 3.0   5.0 7.3333                                    *
+!* 2                                                                *
+!* 5.0  -1.0                                                        *
+!* 1.0   2.0                                                        *
+!* 3.0   7.556                                                      *
+!* 4.0   100.0                                                      *
+!* -10.0 0.00154                                                    *
+!*                                                                  *
+!* Output file sysmat.lst                                           *
+!*                                                                  *
+!* --------------------------------------------------------         *
+!*   SOLVING A LINEAR MATRIX SYSTEM AX=B                            *
+!* --------------------------------------------------------         *
+!*   (by GAUSS-JORDAN Method)                                       *
+!*                                                                  *
+!*                                                                  *
+!*  N=  5                                                           *
+!*                                                                  *
+!*  MATRIX A                                                        * 
+!*                                                                  *
+!* 0.200000E+01-0.100000E+01 0.100000E+01 0.700000E+01-0.125400E+02 *
+!* 0.100000E+01 0.500000E+01-0.200000E+01-0.800000E+01 0.100000E+03 *
+!* 0.300000E+01-0.200000E+01 0.300000E+01 0.450000E+02 0.273333E+02 *
+!* 0.110000E+02 0.550000E+00-0.200000E+01-0.400000E+01 0.100000E+01 *
+!* 0.330000E+02 0.200000E+01 0.000000E+00 0.300000E+01 0.500000E+01 *
+!*                                                                  *
+!*  M=  2                                                           *
+!*                                                                  *
+!*  MATRIX B                                                        *
+!*                                                                  *
+!* 0.500000E+01-0.100000E+01                                        *
+!* 0.100000E+01 0.200000E+01                                        *
+!* 0.300000E+01 0.755600E+01                                        *
+!* 0.400000E+01 0.100000E+03                                        *
+!*-0.100000E+02 0.154000E-02                                        *
+!*                                                                  *
+!*                                                                  *
+!*  INVERSE OF MATRIX A                                             *          
+!*                                                                  *
+!* 0.443358E+00 0.690058E-01-0.481399E-01 0.804632E-01-0.211029E-01 *
+!*-0.713021E+01-0.112361E+01 0.733779E+00-0.134083E+01 0.846419E+00 *
+!* 0.201857E+01 0.331776E+00-0.273753E+00-0.233119E+00-0.297984E-01 *
+!*-0.686065E+00-0.114884E+00 0.969036E-01-0.827931E-01 0.638493E-01 *
+!* 0.337563E+00 0.629351E-01-0.339303E-01 0.549511E-01-0.375980E-01 *
+!*                                                                  *
+!*                                                                  *
+!*  SOLUTION MATRIX  X                                              *
+!*                                                                  *
+!* 0.267426E+01 0.737720E+01                                        *
+!*-0.484009E+02-0.123654E+03                                        *
+!* 0.896888E+01-0.267355E+02                                        *
+!*-0.422416E+01-0.709071E+01                                        *
+!* 0.224474E+01 0.502698E+01                                        *
+!*                                                                  *
+!*  DETERMINANT= -0.3537692E+05                                     *
+!*                                                                  *
+!*                                                                  *
+!*  VERIFICATION A*X=B                                              *
+!*                                                                  *
+!* 0.500000E+01-0.100000E+01                                        *
+!* 0.100000E+01 0.200000E+01                                        *
+!* 0.300000E+01 0.755600E+01                                        *
+!* 0.400000E+01 0.100000E+03                                        *
+!*-0.100000E+02 0.154000E-02                                        *
+!* --------------------------------------------------------         *
+!*                                                                  *
+!********************************************************************
+      PROGRAM SYSMAT
+      USE BASIS  !see basis.f90
+
+      REAL*8,POINTER :: A(:,:),B(:,:),A1(:,:)                                             
+      REAL*8,POINTER :: C(:,:),D(:,:)
+      REAL*8,POINTER :: TEMP(:)
+      REAL*8 DETER 
+
+      CHARACTER*40 INPUT,OUTPUT
+      CHARACTER*36 NOM
+
+      WRITE(*,*) ' '
+      WRITE(*,*) ' SOLVING A LINEAR MATRIX SYSTEM AX=B'
+      WRITE(*,17,advance='no'); READ (*,*) NOM
+      J=0
+      DO I=1,LEN(NOM)
+	IF(NOM(I:I)<>' ') J=J+1  !J=real length of NOM
+      ENDDO
+      
+      OUTPUT=NOM(1:J)//'.lst'
+      INPUT =NOM(1:J)//'.dat'
+
+      !Open input, output files
+      OPEN(UNIT=2,FILE=OUTPUT,STATUS='UNKNOWN')	                              
+      OPEN(UNIT=1,FILE=INPUT,STATUS='OLD')	                                                                                                                                                                                                                                                      
+                                                                               
+!Read matrix A to be inverted and copy to output file
+!Utility read/write subroutines are defined in optional module BASIS_R
+
+      READ (1,*)  N   !Size of system to be solved
+
+      !dynamic allocation of matrix A and utility vector TEMP
+      allocate(A(1:N,1:N),stat=ialloc)
+      allocate(TEMP(1:N),stat=ialloc)
+ 
+      CALL WRITEHEAD(2,'  SOLVING A LINEAR MATRIX SYSTEM AX=B')
+      WRITE(2,10)  
+      WRITE(2,12)  N
+
+      READ (1,*) ((A(I,J),J=1,N),I=1,N)
+
+      WRITE(2,15)
+      DO I=1,N
+        DO J=1,N
+	  TEMP(J)=A(I,J)
+        END DO
+	CALL WRITEVEC1(2,N,TEMP)
+      END DO                                       
+                                                                               
+!Read right hand matrix B if M<>0                                              
+     
+      READ (1,*) M
+   
+      WRITE(2,13)  M                                                                       
+      IF(M.NE.0) THEN     
+	!dynamic allocation of matrix B
+   	allocate(B(1:N,1:M),stat=ialloc)
+        READ (1,*) ((B(I,J),J=1,M),I=1,N)                                      
+        WRITE(2,20)                                                             
+	DO I=1,N
+	  DO J=1,M
+	    TEMP(J)=B(I,J)
+          END DO
+	  CALL WRITEVEC1(2,M,TEMP)
+	END DO        		                                  
+      ENDIF     
+      CLOSE(1)                                                                
+                                                                               
+!Store matrix A in utility matrix A1 for verifications purpose
+! (Original A is destroyed during call to inversion process)                                                     
+                                                            
+      !dynamic allocation of utility matrix A1															                  
+      allocate(A1(1:N,1:N),stat=ialloc)
+      A1=A                                                                                                                       
+                                                                               
+!Call matrix inversion subroutine                                               
+                                                                               
+      CALL MATINV(N,M,A,B,DETER)                                                    
+                                                                               
+!Print results to output file                                                          
+                                                                               
+      WRITE(2,30)                                        	                                                             
+      DO I=1,N
+	DO J=1,N
+	  TEMP(J)=A(I,J)
+        END DO
+	CALL WRITEVEC1(2,N,TEMP)
+      END DO      
+                                                                               
+      IF(M.NE.0) THEN                                                           
+        WRITE(2,40)
+	DO I=1,N
+	  DO J=1,M
+	    TEMP(J)=B(I,J)
+          END DO
+	  CALL WRITEVEC1(2,M,TEMP)
+	END DO      		                                    
+      ENDIF                                                                     
+                                                                               
+      WRITE(2,50) DETER                                                         
+                                                                               
+! Verification that new product A*B equals original B matrix               
+! (optional)                                                                
+                                                                               
+      IF(M.NE.0) THEN                                                           
+        WRITE(2,60)                                                             
+!call matrices multiplication subroutine   
+        allocate(C(1:N,1:M),stat=ialloc)                                      
+        CALL MATMUL(A1,B,C,N,M)
+	DO I=1,N
+	  DO J=1,M
+	    TEMP(J)=C(I,J)
+          END DO
+	  CALL WRITEVEC1(2,M,TEMP)
+	END DO      		                                  
+      ELSE                                                                      
+        WRITE(2,70)                                                             
+!call matrices multiplication subroutine
+        allocate(D(1:N,1:N),stat=ialloc)                                         
+        CALL MATMUL(A1,A,D,N,N)
+	DO I=1,N
+	  DO J=1,N
+	    TEMP(J)=D(I,J)
+          END DO
+	  CALL WRITEVEC1(2,N,TEMP)
+	END DO      		                                 
+      ENDIF                                                                     
+                                                                               
+      CALL WRITEEND(2)
+      CLOSE(2)
+      WRITE(*,*) ' Results in file ',OUTPUT
+	  WRITE(*,*) ' '
+      STOP                                                                      
+                                                                               
+   10 FORMAT('  (by GAUSS-JORDAN Method)'//)   
+   12 FORMAT('  N=',I3)
+   13 FORMAT(/'  M=',I3)               
+   15 FORMAT(/'  MATRIX A '/)
+   17 FORMAT(/'  Input file name (without .dat): ')                                                  
+   20 FORMAT(/'  MATRIX B '/)                                                     
+   30 FORMAT(//'  INVERSE OF MATRIX A'/)                                       
+   40 FORMAT(//'  SOLUTION MATRIX X'/)                                         
+   50 FORMAT(/'  DETERMINANT= ',E14.7/)                                      
+   60 FORMAT(/'  VERIFICATION A*X=B'/)                                         
+   70 FORMAT(/'  VERIFICATION A1*A=I'/)                                        
+      END                                                                       
+                                                                               
+!*******************************************
+!*  SOLVING A LINEAR MATRIX SYSTEM AX = B  *
+!*  with Gauss-Jordan method using full    *
+!*  pivoting at each step. During the pro- *
+!* cess, original A and B matrices are     *
+!* destroyed to spare storage location.    *
+!* --------------------------------------- *
+!* INPUTS:    A   MATRIX N*N               *
+!*            B   MATRIX N*M               *
+!* --------------------------------------- *
+!* OUTPUS:    A   INVERSE OF A N*N         *
+!*            DET  DETERMINANT OF A        *
+!*            B   SOLUTION MATRIX N*M      *
+!* --------------------------------------- *
+!* NOTA - If M=0 inversion of A matrix     *
+!*        only.                            *
+!*******************************************
+      SUBROUTINE MATINV(N,M,AA,BB,DET)                                
+      REAL*8, PARAMETER :: EPSMACH=2.D-16                                    
+      REAL*8 AA(N,N),BB(N,M)                                                   
+      REAL*8,POINTER ::  PC(:),PL(:),CS(:)                                                  
+      REAL*8 PV,PAV,DET,TT    
+	                                                    
+!Initializations :                       
+      allocate(PC(1:N),stat=ialloc)
+      allocate(PL(1:N),stat=ialloc)
+      allocate(CS(1:N),stat=ialloc)	                                        
+      DET=1.D0
+      DO I=1,N                                                                                                                   
+        PC(I)=0.D0
+	PL(I)=0.D0
+	CS(I)=0.D0
+      END DO
+!main loop                                                                   
+      DO K=1,N                                                                  
+!Searching greatest pivot :                                               
+        PV=AA(K,K)                                                              
+        IK=K                                                                    
+        JK=K                                                                    
+        PAV=DABS(PV)                                                            
+        DO I=K,N                                                                
+          DO J=K,N                                                              
+            IF (DABS(AA(I,J)).GT.PAV) THEN                                      
+              PV=AA(I,J)                                                        
+              PAV=DABS(PV)                                                      
+              IK=I                                                              
+              JK=J                                                              
+            ENDIF                                                               
+          ENDDO                                                                 
+        ENDDO                                                                   
+                                                                               
+!Search terminated, the pivot is in location I=IK, J=JK.
+!Memorizing pivot location: :                                        
+        PC(K)=JK                                                                
+        PL(K)=IK                                                                
+                                                                               
+!Determinant DET is actualised
+!If DET=0, ERROR MESSAGE and STOP
+!Machine dependant EPSMACH equals here 1.DE-20                                        
+                                                                               
+        IF (IK.NE.K) DET=-DET                                                   
+        IF (JK.NE.K) DET=-DET                                                   
+        DET=DET*PV                                                              
+        IF (DABS(DET).LT.EPSMACH) THEN                                          
+!Error message and Stop                                                     
+          PRINT 10                                                              
+          STOP                                                                  
+        ENDIF                                                                   
+                                                                               
+!POSITIONNING PIVOT IN K,K:                                              
+        IF(IK.NE.K) THEN                                                        
+          DO I=1,N                                                              
+!EXCHANGE LINES IK and K:                                            
+            TT=AA(IK,I)                                                         
+            AA(IK,I)=AA(K,I)                                                    
+            AA(K,I)=TT                                                          
+          ENDDO                                                                 
+        ENDIF                                                                   
+      IF (M.NE.0) THEN                                                          
+        DO I=1,M                                                               
+          TT=BB(IK,I)                                                           
+          BB(IK,I)=BB(K,I)                                                      
+          BB(K,I)=TT                                                            
+        ENDDO                                                                   
+      ENDIF                                                                     
+!Pivot is at correct line                                                
+        IF(JK.NE.K) THEN                                                        
+          DO I=1,N                                                              
+!Exchange columns JK and K of matrix AA                                         
+            TT=AA(I,JK)                                                         
+            AA(I,JK)=AA(I,K)                                                    
+            AA(I,K)=TT                                                          
+          ENDDO                                                                 
+        ENDIF                                                                   
+!Pivot is at correct column and located in K,K                                              
+                                                                               
+!Store column K in vector CS                             
+!then set column K to zero                                             
+        DO I=1,N                                                                
+          CS(I)=AA(I,K)                                                         
+          AA(I,K)=0.D0                                                          
+        ENDDO                                                                   
+!                                                                               
+        CS(K)=0.                                                                
+        AA(K,K)=1.                                                              
+!Modify line K :                                            
+        IF(DABS(PV).LT.EPSMACH) THEN                                            
+          WRITE(*,*) '  PIVOT TOO SMALL - STOP'                               
+          STOP                                                                  
+        ENDIF                                                                   
+        DO I=1,N                                                                
+          AA(K,I)=AA(K,I)/PV                                                    
+        ENDDO                                                                   
+        IF (M.NE.0) THEN                                                        
+          DO I=1,M                                                             
+            BB(K,I)=BB(K,I)/PV                                                  
+          ENDDO                                                                 
+        ENDIF                                                                   
+!Modify other lines of matrix AA:                                        
+        DO J=1,N                                                                
+          IF (J.EQ.K) CONTINUE                                                  
+          DO I=1,N                                                              
+!Modify line J of matrix AA :                                            
+            AA(J,I)=AA(J,I)-CS(J)*AA(K,I)                                       
+          ENDDO                                                                 
+          IF (M.NE.0) THEN                                                      
+            DO I=1,M                                                          
+              BB(J,I)=BB(J,I)-CS(J)*BB(K,I)                                     
+            ENDDO                                                               
+          ENDIF                                                                 
+        ENDDO                                                                   
+!Line K is ready.                                                
+      ENDDO                                                                     
+!End of K loop                                                              
+                                                                               
+!The matrix AA is inverted - Rearrange AA                         
+                                                                               
+!Exchange lines                                                            
+      DO I=N,1,-1                                                               
+        IK=PC(I)                                                                
+        IF (IK.EQ.I) CONTINUE                                                   
+!EXCHANGE LINES I AND PC(I) OF AA:                                         
+        DO J=1,N                                                                
+          TT=AA(I,J)                                                            
+          AA(I,J)=AA(IK,J)                                                      
+          AA(IK,J)=TT                                                           
+        ENDDO                                                                   
+        IF (M.NE.0) THEN                                                        
+          DO J=1,M                                                             
+            TT=BB(I,J)                                                          
+            BB(I,J)=BB(IK,J)                                                    
+            BB(IK,J)=TT                                                         
+          ENDDO                                                                 
+        ENDIF                                                                   
+!NO MORE EXCHANGE NEEDED                                                      
+!GO TO NEXT LINE                                                  
+      ENDDO                                                                     
+                                                                               
+!EXCHANGE COLUMNS                                                          
+                                                                               
+      DO J=N,1,-1                                                               
+        JK=PL(J)                                                                
+        IF (JK.EQ.J) CONTINUE                                                   
+!EXCHANGE COLUMNS J AND PL(J) OF AA :                                       
+        DO I=1,N                                                                
+          TT=AA(I,J)                                                            
+          AA(I,J)=AA(I,JK)                                                      
+          AA(I,JK)=TT                                                           
+        ENDDO                                                                   
+!NO MORE EXCHANGE NEEDED                                                      
+!GO TO NEXT COLUMN   
+      ENDDO                                                                     
+!REARRANGEMENT TERMINATED.                                                        
+      RETURN                                                                    
+   10 FORMAT(///'  DETERMINANT EQUALS ZERO, NO SOLUTION!')                    
+      END                                                                       
+
+!*******************************************
+!*    MULTIPLICATION OF TWO SQUARE REAL    *
+!*    MATRICES                             *
+!* --------------------------------------- *
+!* INPUTS:    A1 MATRIX N*N                *
+!*            B  MATRIX N*N                *
+!*            N  INTEGER                   *
+!* --------------------------------------- *
+!* OUTPUTS:   C  MATRIX N*N PRODUCT A*B    *
+!*                                         *
+!*******************************************
+      SUBROUTINE MATMUL(A,B,C,N,M)
+      REAL*8 A(N,N),B(N,M),C(N,M),SUM                                           
+      DO I=1,N                                                                  
+        DO J=1,M                                                                
+          SUM=0.                                                                
+          DO K=1,N                                                              
+            SUM=SUM+A(I,K)*B(K,J)                                               
+          ENDDO                                                                 
+          C(I,J)=SUM                                                            
+        ENDDO                                                                   
+      ENDDO                                                                     
+      RETURN                                                                    
+      END                                                                       
+                                                                               
+! End of file sysmat.f90  DIGITAL FORTRAN version, dec. 1998

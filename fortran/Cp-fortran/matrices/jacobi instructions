@@ -1,0 +1,6 @@
+
+    Start with U = 1.
+    Determine the off diagonal element Aij that is largest in absolute value and compute the rotation angle alpha from Aij and the corresponding diagonal elements: alpha = ½ arctan (2 Aij / (Ajj - Aii) ) .
+    Construct a matrix V that is identical to the unit matrix, except for Vii = Vjj = cos alpha, Vji = sin alpha, and Vij = -sin alpha.
+    Then compute the matrix products A' = VTAV and U' = UV; A'ij becomes zero by this operation, the other elements in rows and columns i and j are changed.
+    If the largest absolute value of the off diagonal elements Aij is larger than a threshold, repeat the process from step no. 2 with A' instead of A and U' instead of U. Upon convergence, A' contains the eigenvalues and U' the eigenvectors. 

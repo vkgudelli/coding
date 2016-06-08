@@ -1,0 +1,18 @@
+== Class notes for fortran ==
+=== Books ===
+
+An intro to computational -Tao Pang
+Computer programming in fortran 90 -V Rajaraman
+Numerical recipe -press 
+
+course settings in the server
+----------------------------
+ssh ph12m1005@192.168.1.92
+passwd:dft@123
+
+=== commands ===
+du -sh "to check the size of the file
+
+== Aitkens method ==
+faster than putting x=g(x) and feedong the new x to f(x) and finding convergence from it.
+* let r be the root of f(x)

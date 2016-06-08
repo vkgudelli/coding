@@ -1,0 +1,26 @@
+set terminal pngcairo dashed
+set output plot_name.'.png'
+set border linewidth 2
+#set xrange [0.5:4.5]	
+#set bmargin 5
+#
+#set title ""
+
+set xlabel "distance [um]"
+set ylabel " intensity"
+set style line 1 lc 'red' pt 1 ps 1 lt 1 lw 2
+#set style line 2 lc 'blue' pt 1 ps 1 lt 1 lw 2
+#set style line 3 lc 'green' pt 1 ps 1 lt 1 lw 2
+#set style line 4 lc 'red' pt 1 ps 1 lt 7 lw 1
+#set style line 5 lc 'blue' pt 1 ps 1 lt 7 lw 1
+#set style line 6 lc 'green' pt 1 ps 1 lt 7 lw 1
+#set style line 7 lc 'red' pt 1 ps 1 lt 3 lw 1
+#set style line 8 lc 'blue' pt 1 ps 1 lt 3 lw 1
+#set style line 9 lc 'green' pt 1 ps 1 lt 3 lw 1
+#
+show style line
+
+set key left
+set key font ",10"
+
+plot	file_name  u 1:2 ls 1 title 'Intensity' smooth cspline

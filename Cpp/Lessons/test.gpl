@@ -1,0 +1,7 @@
+set terminal png
+set out 'test.png'
+set xlabel 'X'
+set ylabel 'Y'
+set xrange [0:20]
+set yrange [0:20]
+plot 'test.txt'w lp,'test2.txt' w lp

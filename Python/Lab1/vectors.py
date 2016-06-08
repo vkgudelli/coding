@@ -1,0 +1,6 @@
+x1,y1,z1=eval(input("enter the first vector \n"))
+x2,y2,z2=eval(input("enter the second vector\n"))
+print("sum of the 2 vectors {0}i+{1}j+{2}k ".format(x1+x2,y1+y2,z1+z2))
+print("difference of the 2 vectors {0}i+{1}j+{2}k ".format(x1-x2,y1-y2,z1-z2))
+print("the dot product of 2 vectors",x1*x2+y1*y2+z1*z2)
+print("the cross product of the 2 vectors {0}i+{1}j+{2}k ".format((y1*z2-z1*y2),(z1*y2-x1*z2),(x1*y2-y1*x2)))
